@@ -1,66 +1,49 @@
-import sqlite3 from "sqlite3";
+import Database from "better-sqlite3";
 import bcrypt from "bcrypt";
 
-const db = new sqlite3.Database("./radio.db");
+const db = new Database("./radio.db");
 
-db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS admin (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE,
-      password TEXT
-    )
-  `);
-});
+// Crear tabla si no existe
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS admin (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
+    password TEXT
+  )
+`).run();
 
 export async function initAdmin() {
-  return new Promise((resolve, reject) => {
-    db.get("SELECT * FROM admin WHERE username = ?", ["admin"], async (err, row) => {
-      if (err) reject(err);
-      if (!row) {
-        const hash = await bcrypt.hash("1234", 10);
-        db.run("INSERT INTO admin (username, password) VALUES (?, ?)", ["admin", hash]);
-        console.log("Usuario admin creado: usuario=admin contraseña=1234");
-      }
-      resolve();
-    });
-  });
+  const admin = db.prepare("SELECT * FROM admin WHERE username = ?").get("admin");
+  if (!admin) {
+    const hash = await bcrypt.hash("1234", 10);
+    db.prepare("INSERT INTO admin (username, password) VALUES (?, ?)").run("admin", hash);
+    console.log("✅ Usuario admin creado: usuario=admin contraseña=1234");
+  }
 }
 
 export function getAdmin(username) {
-  return new Promise((resolve, reject) => {
-    db.get("SELECT * FROM admin WHERE username = ?", [username], (err, row) => {
-      if (err) reject(err);
-      resolve(row);
-    });
-  });
+  return db.prepare("SELECT * FROM admin WHERE username = ?").get(username);
 }
 
 export async function createUser(username, password) {
   const hash = await bcrypt.hash(password, 10);
-  return new Promise((resolve) => {
-    db.run("INSERT INTO admin (username, password) VALUES (?, ?)", [username, hash], (err) => {
-      resolve(!err);
-    });
-  });
+  try {
+    db.prepare("INSERT INTO admin (username, password) VALUES (?, ?)").run(username, hash);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function deleteUser(username) {
-  return new Promise((resolve) => {
-    db.run("DELETE FROM admin WHERE username = ?", [username], function (err) {
-      resolve(!err && this.changes > 0);
-    });
-  });
+  const result = db.prepare("DELETE FROM admin WHERE username = ?").run(username);
+  return result.changes > 0;
 }
 
 export async function updatePassword(username, newPassword) {
   const hash = await bcrypt.hash(newPassword, 10);
-  return new Promise((resolve) => {
-    db.run("UPDATE admin SET password = ? WHERE username = ?", [hash, username], (err) => {
-      resolve(!err);
-    });
-  });
+  db.prepare("UPDATE admin SET password = ? WHERE username = ?").run(hash, username);
+  return true;
 }
 
 export default db;
-

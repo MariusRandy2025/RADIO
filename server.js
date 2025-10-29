@@ -95,5 +95,5 @@ io.on("connection", (socket) => {
   socket.on("stopStream", () => io.emit("stopStream"));
 });
 
-const PORT = 3000;
-server.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));

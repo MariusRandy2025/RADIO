@@ -1,19 +1,21 @@
 {
   "name": "radio",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Radio web en vivo con Node.js, Express, Socket.io y SQLite",
+  "main": "server.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "postinstall": "npm rebuild better-sqlite3 --build-from-source"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.4.1",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
-    "socket.io": "^4.8.1",
-    "sqlite3": "^5.1.7"
+    "socket.io": "^4.8.1"
   }
 }
