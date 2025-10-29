@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel de Configuración - Radio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>⚙️ Panel de Configuración</h1>
+  <p>Bienvenido, <span id="user"></span></p>
+
+  <h2>🔑 Cambiar contraseña</h2>
+  <form id="changePasswordForm">
+    <input type="password" id="oldPass" placeholder="Contraseña actual" required><br>
+    <input type="password" id="newPass" placeholder="Nueva contraseña" required><br>
+    <button type="submit">Cambiar</button>
+  </form>
+
+  <h2>👥 Gestión de locutores</h2>
+  <form id="newUserForm">
+    <input type="text" id="newUser" placeholder="Nuevo usuario" required><br>
+    <input type="password" id="newUserPass" placeholder="Contraseña" required><br>
+    <button type="submit">Crear locutor</button>
+  </form>
+
+  <h3>🗑️ Eliminar locutor</h3>
+  <form id="deleteUserForm">
+    <input type="text" id="delUser" placeholder="Usuario a eliminar" required><br>
+    <button type="submit">Eliminar</button>
+  </form>
+
+  <a href="/admin.html">Volver a transmisión</a> |
+  <a href="/logout">Cerrar sesión</a>
+
+  <script>
+    async function getUser() {
+      const res = await fetch('/api/whoami');
+      const data = await res.json();
+      document.getElementById('user').textContent = data.username;
+    }
+    getUser();
+
+    document.getElementById('changePasswordForm').onsubmit = async e => {
+      e.preventDefault();
+      const oldPass = oldPass.value;
+      const newPass = newPass.value;
+      const res = await fetch('/api/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldPass, newPass })
+      });
+      alert(await res.text());
+      e.target.reset();
+    };
+
+    document.getElementById('newUserForm').onsubmit = async e => {
+      e.preventDefault();
+      const username = newUser.value;
+      const password = newUserPass.value;
+      const res = await fetch('/api/new-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      alert(await res.text());
+      e.target.reset();
+    };
+
+    document.getElementById('deleteUserForm').onsubmit = async e => {
+      e.preventDefault();
+      const username = delUser.value;
+      const res = await fetch('/api/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+      alert(await res.text());
+      e.target.reset();
+    };
+  </script>
+</body>
+</html>

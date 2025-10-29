@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Radio en Vivo 🎧</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>📻 Escucha en Vivo</h1>
+
+  <audio id="player" autoplay></audio>
+
+  <div id="chat">
+    <h3>💬 Comentarios en vivo</h3>
+    <div id="messages"></div>
+    <input id="msg" placeholder="Escribe un mensaje..." />
+    <button id="send">Enviar</button>
+  </div>
+
+  <div id="end" style="display:none;">
+    <h2>🎧 ¡Hasta la próxima!</h2>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

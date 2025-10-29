@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel del Locutor 🎙️</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>🎙️ Transmisión en Vivo</h1>
+  <a href="/panel.html">⚙️ Panel de Configuración</a> |
+  <a href="/logout">🚪 Cerrar sesión</a>
+
+  <br><br>
+  <button id="start">Iniciar transmisión</button>
+  <button id="stop" disabled>Detener transmisión</button>
+
+  <audio id="music" controls>
+    <source src="musica.mp3" type="audio/mpeg">
+  </audio>
+
+  <div id="chat">
+    <h3>💬 Comentarios en vivo</h3>
+    <div id="messages"></div>
+    <input id="msg" placeholder="Escribe un mensaje..." />
+    <button id="send">Enviar</button>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
