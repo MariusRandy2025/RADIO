@@ -11,8 +11,6 @@ const messagesDiv = document.getElementById("messages");
 const startBtn = document.getElementById("start");
 const stopBtn = document.getElementById("stop");
 const player = document.getElementById("player");
-const activarBtn = document.getElementById("activarAudio");
-const statusText = document.getElementById("statusText");
 
 // === CHAT ===
 if (sendBtn) {
@@ -34,78 +32,63 @@ socket.on("chat", (msg) => {
 
 // === AUDIO RECEPCIÓN (Oyente) ===
 if (player) {
-  let audioCtx;
-  let audioEnabled = false;
+  // Creamos un MediaSource dinámico
+  const mediaSource = new MediaSource();
+  player.src = URL.createObjectURL(mediaSource);
+  player.autoplay = true;
+  player.playsInline = true;
 
-  // Botón de activación (solo para navegadores modernos)
-  if (activarBtn) {
-    activarBtn.onclick = async () => {
-      try {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        await audioCtx.resume();
-        audioEnabled = true;
-        activarBtn.disabled = true;
-        if (statusText) statusText.textContent = "🔴 En vivo o esperando señal...";
-        console.log("🎧 AudioContext activado");
-      } catch (err) {
-        alert("Error activando el audio: " + err.message);
+  let sourceBuffer;
+  let audioQueue = [];
+
+  mediaSource.addEventListener("sourceopen", () => {
+    sourceBuffer = mediaSource.addSourceBuffer("audio/mpeg");
+    sourceBuffer.mode = "sequence";
+
+    sourceBuffer.addEventListener("updateend", () => {
+      if (audioQueue.length > 0 && !sourceBuffer.updating) {
+        const chunk = audioQueue.shift();
+        sourceBuffer.appendBuffer(chunk);
       }
-    };
-  } else {
-    // Si no hay botón, crear contexto directamente (modo locutor o pruebas locales)
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    audioEnabled = true;
-  }
+    });
+  });
 
-  socket.on("audio", async (data) => {
-    if (!audioEnabled || !audioCtx) return;
-    try {
-      const floatArray = new Float32Array(data);
-      const buffer = audioCtx.createBuffer(1, floatArray.length, 44100);
-      buffer.copyToChannel(floatArray, 0);
-      const source = audioCtx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(audioCtx.destination);
-      source.start(0);
-      if (statusText) statusText.textContent = "🟢 Transmitiendo...";
-    } catch (err) {
-      console.error("Error reproduciendo audio:", err);
+  // Recibir audio desde el servidor (formato Blob o Uint8Array)
+  socket.on("audio", (data) => {
+    const chunk = new Uint8Array(data);
+    if (sourceBuffer && !sourceBuffer.updating) {
+      sourceBuffer.appendBuffer(chunk);
+    } else {
+      audioQueue.push(chunk);
     }
   });
 
   socket.on("stopStream", () => {
-    if (statusText) statusText.textContent = "⏹️ Transmisión detenida.";
-    const endMsg = document.getElementById("end");
-    if (endMsg) endMsg.style.display = "block";
     console.log("🔴 Transmisión detenida.");
   });
 }
 
 // === TRANSMISIÓN (Locutor) ===
 if (startBtn) {
-  let mediaStream;
-  let processor;
-  let context;
+  let mediaRecorder;
 
   startBtn.onclick = async () => {
     try {
-      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      context = new (window.AudioContext || window.webkitAudioContext)();
-      await context.resume();
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus" });
 
-      const source = context.createMediaStreamSource(mediaStream);
-      processor = context.createScriptProcessor(2048, 1, 1);
-
-      source.connect(processor);
-      processor.connect(context.destination);
-
-      processor.onaudioprocess = (e) => {
-        const channelData = e.inputBuffer.getChannelData(0);
-        socket.emit("audio", channelData);
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          event.data.arrayBuffer().then(buffer => {
+            socket.emit("audio", new Uint8Array(buffer));
+          });
+        }
       };
 
+      mediaRecorder.start(200); // envía fragmentos cada 200ms
       startBtn.disabled = true;
       stopBtn.disabled = false;
+
       console.log("🎙️ Transmisión iniciada.");
     } catch (err) {
       alert("Error accediendo al micrófono: " + err.message);
@@ -114,13 +97,13 @@ if (startBtn) {
   };
 
   stopBtn.onclick = () => {
-    if (mediaStream) mediaStream.getTracks().forEach((t) => t.stop());
-    if (processor) processor.disconnect();
-    if (context) context.close();
-
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+    }
     socket.emit("stopStream");
     startBtn.disabled = false;
     stopBtn.disabled = true;
     console.log("🛑 Transmisión detenida.");
   };
 }
+

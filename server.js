@@ -5,22 +5,33 @@ import session from "express-session";
 import bcrypt from "bcrypt";
 import path from "path";
 import { fileURLToPath } from "url";
-import { initAdmin, getAdmin, createUser, deleteUser, updatePassword } from "./db.js";
+import {
+  initAdmin,
+  getAdmin,
+  createUser,
+  deleteUser,
+  updatePassword,
+} from "./db.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  maxHttpBufferSize: 1e6, // 🔧 permite chunks de audio más grandes (1 MB)
+  cors: { origin: "*" }
+});
 
+// --- Inicializar admin por defecto ---
 await initAdmin();
 
+// --- Middleware base ---
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// --- Sesión ---
+// --- Sesiones ---
 app.use(
   session({
     secret: "clave-secreta-radio",
@@ -29,7 +40,7 @@ app.use(
   })
 );
 
-// --- Middleware de autenticación ---
+// --- Autenticación ---
 function checkAuth(req, res, next) {
   if (req.session.user) next();
   else res.redirect("/login.html");
@@ -43,7 +54,9 @@ app.post("/login", async (req, res) => {
     req.session.user = username;
     res.redirect("/admin.html");
   } else {
-    res.send("❌ Usuario o contraseña incorrectos. <a href='/login.html'>Intentar de nuevo</a>");
+    res.send(
+      "❌ Usuario o contraseña incorrectos. <a href='/login.html'>Intentar de nuevo</a>"
+    );
   }
 });
 
@@ -88,12 +101,30 @@ app.post("/api/delete-user", checkAuth, async (req, res) => {
   res.send(ok ? "🗑️ Usuario eliminado." : "❌ No se encontró ese usuario.");
 });
 
-// --- WebSockets ---
+// --- WebSockets: Audio y Chat ---
 io.on("connection", (socket) => {
+  console.log("🟢 Nueva conexión:", socket.id);
+
+  // Chat en vivo
   socket.on("chat", (msg) => io.emit("chat", msg));
-  socket.on("audio", (data) => socket.broadcast.emit("audio", data));
-  socket.on("stopStream", () => io.emit("stopStream"));
+
+  // Audio: recibe paquetes binarios y los reenvía
+  socket.on("audio", (data) => {
+    // data viene como Uint8Array de audio WebM/Opus
+    socket.broadcast.emit("audio", data);
+  });
+
+  socket.on("stopStream", () => {
+    io.emit("stopStream");
+    console.log("🔴 Transmisión detenida por", socket.id);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("⚪ Cliente desconectado:", socket.id);
+  });
 });
 
+// --- Inicio del servidor ---
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Servidor en puerto ${PORT}`));
+
