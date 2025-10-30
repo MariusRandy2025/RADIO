@@ -8,6 +8,11 @@
 <body>
   <h1>📻 Escucha en Vivo</h1>
 
+  <p><strong>Estado:</strong> <span id="statusText">Esperando transmisión...</span></p>
+
+  <!-- 🔊 Botón necesario para iniciar AudioContext -->
+  <button id="activarAudio">🔊 Activar audio</button>
+
   <audio id="player" autoplay></audio>
 
   <div id="chat">
@@ -25,3 +30,4 @@
   <script src="script.js"></script>
 </body>
 </html>
+
