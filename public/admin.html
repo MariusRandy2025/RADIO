@@ -1,31 +1,58 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Panel del Locutor 🎙️</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
 </head>
 <body>
   <h1>🎙️ Transmisión en Vivo</h1>
-  <a href="/panel.html">⚙️ Panel de Configuración</a> |
-  <a href="/logout">🚪 Cerrar sesión</a>
+  <a href="/panel" class="btn"><i class="fa-solid fa-gear"></i> Panel Admin</a>
+  <a href="/logout" class="btn"><i class="fa-solid fa-door-closed"></i> Cerrar sesión</a>
 
-  <br><br>
-  <button id="start">Iniciar transmisión</button>
-  <button id="stop" disabled>Detener transmisión</button>
+  <div class="controls">
+    <button id="start" class="btn"><i class="fa-solid fa-microphone"></i> Iniciar micro</button>
+    <button id="stop" class="btn" disabled><i class="fa-solid fa-stop"></i> Detener</button>
+    <p id="statusText">🎧 Micrófono inactivo</p>
+  </div>
 
-  <audio id="music" controls>
-    <source src="musica.mp3" type="audio/mpeg">
-  </audio>
+  <hr />
+
+  <div class="music-share">
+    <h3>🎶 Compartir Música</h3>
+    <input type="file" id="musicFile" accept="audio/*" />
+    <button id="sendMusic" class="btn"><i class="fa-solid fa-music"></i> Enviar música</button>
+
+    <!-- Botón para pausar/reanudar música -->
+    <button id="toggleMusic" class="btn" style="display:none;"><i class="fa-solid fa-pause"></i> Pausar música</button>
+
+    <!-- Control de volumen -->
+    <div id="musicVolumeControl" style="display:none; margin-top: 10px;">
+      <label for="musicVolume">🔈 Volumen música:</label>
+      <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="1">
+    </div>
+  </div>
+
+  <hr />
 
   <div id="chat">
     <h3>💬 Comentarios en vivo</h3>
     <div id="messages"></div>
-    <input id="msg" placeholder="Escribe un mensaje..." />
-    <button id="send">Enviar</button>
+    <textarea id="msg" placeholder="Escribe un mensaje..."></textarea>
+    <button id="send"><i class="fa-solid fa-paper-plane"></i> Enviar</button>
   </div>
 
+  <hr />
+  <h3>🔊 Escucha tu transmisión</h3>
+  <audio id="player" controls autoplay></audio>
+
   <script src="/socket.io/socket.io.js"></script>
-  <script src="script.js"></script>
+  <script src="/js/admin.js"></script>
 </body>
 </html>
+
+
+
+

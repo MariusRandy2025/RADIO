@@ -1,5 +1,5 @@
 {
-  "name": "radio",
+  "name": "y",
   "version": "1.0.0",
   "description": "Radio web en vivo con Node.js, Express, Socket.io y SQLite",
   "main": "server.js",
@@ -17,5 +17,13 @@
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "socket.io": "^4.8.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MariusRandy2025/RADIO.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MariusRandy2025/RADIO/issues"
+  },
+  "homepage": "https://github.com/MariusRandy2025/RADIO#readme"
 }

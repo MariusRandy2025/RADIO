@@ -2,48 +2,71 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Panel de Configuración - Radio</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚙️ Panel de Configuración - Radio</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body>
   <h1>⚙️ Panel de Configuración</h1>
   <p>Bienvenido, <span id="user"></span></p>
 
-  <h2>🔑 Cambiar contraseña</h2>
-  <form id="changePasswordForm">
-    <input type="password" id="oldPass" placeholder="Contraseña actual" required><br>
-    <input type="password" id="newPass" placeholder="Nueva contraseña" required><br>
-    <button type="submit">Cambiar</button>
-  </form>
+  <section>
+    <h2>🔑 Cambiar contraseña</h2>
+    <form id="changePasswordForm" class="form">
+      <input type="password" id="oldPass" placeholder="Contraseña actual" required><br>
+      <input type="password" id="newPass" placeholder="Nueva contraseña" required minlength="6"><br>
+      <button type="submit" class="btn">
+        <i class="fa-solid fa-key"></i> Cambiar
+      </button>
+    </form>
+  </section>
 
-  <h2>👥 Gestión de locutores</h2>
-  <form id="newUserForm">
-    <input type="text" id="newUser" placeholder="Nuevo usuario" required><br>
-    <input type="password" id="newUserPass" placeholder="Contraseña" required><br>
-    <button type="submit">Crear locutor</button>
-  </form>
+  <section>
+    <h2>👥 Gestión de locutores</h2>
+    <form id="newUserForm" class="form">
+      <input type="text" id="newUser" placeholder="Nuevo usuario" required><br>
+      <input type="password" id="newUserPass" placeholder="Contraseña" required minlength="6"><br>
+      <button type="submit" class="btn">
+        <i class="fa-solid fa-user-plus"></i> Crear locutor
+      </button>
+    </form>
 
-  <h3>🗑️ Eliminar locutor</h3>
-  <form id="deleteUserForm">
-    <input type="text" id="delUser" placeholder="Usuario a eliminar" required><br>
-    <button type="submit">Eliminar</button>
-  </form>
+    <h3>🗑️ Eliminar locutor</h3>
+    <form id="deleteUserForm" class="form">
+      <input type="text" id="delUser" placeholder="Usuario a eliminar" required><br>
+      <button type="submit" class="btn danger">
+        <i class="fa-solid fa-user-minus"></i> Eliminar
+      </button>
+    </form>
+  </section>
 
-  <a href="/admin.html">Volver a transmisión</a> |
-  <a href="/logout">Cerrar sesión</a>
+  <div style="margin-top:20px;">
+    <a href="/admin" class="btn"><i class="fa-solid fa-arrow-left"></i> Volver a transmisión</a>
+    <a href="/logout" class="btn"><i class="fa-solid fa-door-closed"></i> Cerrar sesión</a>
+  </div>
 
   <script>
+    // === Obtener nombre del usuario conectado ===
     async function getUser() {
-      const res = await fetch('/api/whoami');
-      const data = await res.json();
-      document.getElementById('user').textContent = data.username;
+      try {
+        const res = await fetch('/api/whoami');
+        if (!res.ok) return location.href = '/login.html';
+        const data = await res.json();
+        document.getElementById('user').textContent = data.username;
+        window.username = data.username;
+      } catch {
+        location.href = '/login.html';
+      }
     }
     getUser();
 
+    // === Cambiar contraseña ===
     document.getElementById('changePasswordForm').onsubmit = async e => {
       e.preventDefault();
-      const oldPass = oldPass.value;
-      const newPass = newPass.value;
+      const oldPass = oldPass.value.trim();
+      const newPass = newPass.value.trim();
+      if (newPass.length < 6) return alert("La nueva contraseña debe tener al menos 6 caracteres.");
       const res = await fetch('/api/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,10 +76,12 @@
       e.target.reset();
     };
 
+    // === Crear locutor ===
     document.getElementById('newUserForm').onsubmit = async e => {
       e.preventDefault();
-      const username = newUser.value;
-      const password = newUserPass.value;
+      const username = newUser.value.trim();
+      const password = newUserPass.value.trim();
+      if (password.length < 6) return alert("La contraseña debe tener al menos 6 caracteres.");
       const res = await fetch('/api/new-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,9 +91,11 @@
       e.target.reset();
     };
 
+    // === Eliminar locutor ===
     document.getElementById('deleteUserForm').onsubmit = async e => {
       e.preventDefault();
-      const username = delUser.value;
+      const username = delUser.value.trim();
+      if (!confirm(`¿Seguro que quieres eliminar a "${username}"?`)) return;
       const res = await fetch('/api/delete-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -80,3 +107,4 @@
   </script>
 </body>
 </html>
+
